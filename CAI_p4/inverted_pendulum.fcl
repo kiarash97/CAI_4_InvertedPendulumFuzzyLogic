@@ -1,0 +1,67 @@
+FUNCTION_BLOCK Inverted_Pendulum
+
+    VAR_INPUT
+        theta : REAL;
+        theta_dot : REAL;
+
+    END_VAR
+
+    VAR_OUTPUT
+        F : REAL;
+    END_VAR
+
+    FUZZIFY theta
+        TERM up_right_good :=  (179,0) (180,1);
+        TERM up_right :=  (150,0) (165,1) (179,0);
+
+        TERM up_left_good :=  (180,1) (181,0);
+        TERM up_left := (181,0) (195,1) (210,0);
+
+        TERM down_right := (0,1) (45,0);
+        TERM down_left := (315,0) (360,1);
+
+    END_FUZZIFY
+
+    FUZZIFY theta_dot
+
+        TERM cw := (-20,0) (-11,1) (-2,0);
+        TERM ccw := (2,0) (11,1) (20,0);
+
+        TERM high_ccw := (20,0) (40,1) (60,0);
+        TERM high_cw := (-60,0) (-40,1) (-20,0);
+
+    END_FUZZIFY
+
+
+    DEFUZZIFY F
+
+        TERM low_left := (-100,0) (-80,1) (-60,0);
+        TERM high_left := (-700,0) (-400,1) (-100,0);
+
+
+        TERM low_right := (60,0) (80,1) (100,0);
+        TERM high_right := (100,0) (400,1) (700,0);
+
+        ACCU : MAX; (* AlgebraicSum *)
+        METHOD : COG;
+        DEFAULT := 0;
+
+    END_DEFUZZIFY
+
+    RULEBLOCK Inverted_Pendulum
+
+        AND : AlgebraicProduct;
+        OR : MAX;
+        RULE 1 : IF theta IS up_right_good AND theta_dot IS cw THEN F IS high_right;
+        RULE 2 : IF theta IS up_left_good AND theta_dot IS ccw THEN F IS high_left;
+        RULE 3 : IF theta IS down_right THEN F IS low_right;
+        RULE 4 : IF theta IS down_left THEN F IS low_left;
+        RULE 5 : IF theta IS up_left THEN F IS high_left;
+        RULE 6 : IF theta IS up_right THEN F IS high_right;
+        RULE 7 : IF theta_dot IS high_cw AND (theta IS up_right OR theta IS up_right_good) THEN F IS high_right;
+        RULE 8 : IF theta_dot IS high_ccw AND (theta IS up_left OR theta IS up_left_good) THEN F IS high_left;
+
+
+    END_RULEBLOCK
+
+END_FUNCTION_BLOCK
